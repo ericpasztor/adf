@@ -1,0 +1,191 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "sdbx-df"
+		},
+		"sdbxadls_ls_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sdbxadls_ls'"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/sdbxadls_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Linked Service to access Blob Storage",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('sdbxadls_ls_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDataset_ope')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sdbxadls_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "products_output.csv",
+						"container": "sdbxfs"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sdbxadls_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDataset_ope')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sdbxadls_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "products.csv",
+						"container": "sdbxfs"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "ProductID",
+						"type": "String"
+					},
+					{
+						"name": "ProductName",
+						"type": "String"
+					},
+					{
+						"name": "Category",
+						"type": "String"
+					},
+					{
+						"name": "ListPrice",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sdbxadls_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/copy_products')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "cpy_products",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "sdbxfs//products.csv"
+							},
+							{
+								"name": "Destination",
+								"value": "sdbxfs//products_output.csv"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings",
+									"skipLineCount": 0
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"validateDataConsistency": false,
+							"translator": {
+								"value": "@json('{\n            \"type\": \"TabularTranslator\",\n            \"mappings\": [\n                {\n                    \"source\": {\n                        \"name\": \"MEMBER_NO\",\n                        \"type\": \"Decimal\"\n                    },\n                    \"sink\": {\n                        \"name\": \"MEMBER_NO\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HI_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HI_SINCEJOIN_AMNT_Sink\",\n                        \"type\": \"Float\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HI_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HI_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HI_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HI_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BEA_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BEA_SINCEJOIN_AMNT\",\n                        \"type\": \"Float\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BEA_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BEA_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BEA_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BEA_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"APRL_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"APRL_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"APRL_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"APRL_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"APRL_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"APRL_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HS_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HS_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HS_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HS_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"HS_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"HS_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"JWACS_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"JWACS_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"JWACS_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"JWACS_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"JWACS_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"JWACS_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BCC_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BCC_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BCC_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BCC_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"BCC_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"BCC_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"MSL_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"MSL_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"MSL_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"MSL_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"MSL_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"MSL_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"NA_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"NA_SINCEJOIN_AMNT\",\n                        \"type\": \"Double\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"NA_SINCEJOIN_QTY\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"NA_SINCEJOIN_QTY\",\n                        \"type\": \"Integer\"\n                    }\n                },\n                {\n                    \"source\": {\n                        \"name\": \"NA_SINCEJOIN_ORD\",\n                        \"type\": \"Double\"\n                    },\n                    \"sink\": {\n                        \"name\": \"NA_SINCEJOIN_ORD\",\n                        \"type\": \"Integer\"\n                    }\n                }\n            ]\n        }'\n)",
+								"type": "Expression"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_ope",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDataset_ope",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDataset_ope')]",
+				"[concat(variables('factoryId'), '/datasets/DestinationDataset_ope')]"
+			]
+		}
+	]
+}
