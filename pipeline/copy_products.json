@@ -21,6 +21,10 @@
 					{
 						"name": "Destination",
 						"value": "sdbxfs//products_output.csv"
+					},
+					{
+						"name": "allowTypeConversion",
+						"value": "true"
 					}
 				],
 				"typeProperties": {
