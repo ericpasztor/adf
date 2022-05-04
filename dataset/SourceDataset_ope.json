@@ -1,0 +1,40 @@
+{
+	"name": "SourceDataset_ope",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sdbxadls_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "products.csv",
+				"container": "sdbxfs"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "ProductID",
+				"type": "String"
+			},
+			{
+				"name": "ProductName",
+				"type": "String"
+			},
+			{
+				"name": "Category",
+				"type": "String"
+			},
+			{
+				"name": "ListPrice",
+				"type": "String"
+			}
+		]
+	}
+}
