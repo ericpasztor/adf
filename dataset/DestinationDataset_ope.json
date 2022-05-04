@@ -1,0 +1,22 @@
+{
+	"name": "DestinationDataset_ope",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sdbxadls_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "products_output.csv",
+				"container": "sdbxfs"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
