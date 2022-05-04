@@ -1,0 +1,9 @@
+{
+	"name": "sdbx-df",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "d499949f-03af-4852-9deb-0a7428da04a7",
+		"tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+	}
+}
