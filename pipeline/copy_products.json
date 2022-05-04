@@ -23,7 +23,11 @@
 						"value": "sdbxfs//products_output.csv"
 					},
 					{
-						"name": "allowTypeConversion",
+						"name": "typeConversion",
+						"value": "true"
+					},
+					{
+						"name": "allowDataTruncation",
 						"value": "true"
 					}
 				],
